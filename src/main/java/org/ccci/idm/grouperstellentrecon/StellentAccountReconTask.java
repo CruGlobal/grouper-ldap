@@ -2,6 +2,7 @@ package org.ccci.idm.grouperstellentrecon;
 
 import org.ccci.idm.grouperrecon.ReconciliationTask;
 import org.ccci.idm.grouperstellentrecon.process.ReconcileAccounts;
+import org.ccci.idm.grouperstellentrecon.service.StellentAccountService;
 
 import edu.internet2.middleware.grouper.util.ConfigItem;
 
@@ -14,12 +15,13 @@ public class StellentAccountReconTask extends ReconciliationTask
     private String password = "-------";
     @ConfigItem
     private String url = "http://ucm-qa.ccci.org/ucmqa/idcplg?IdcService=QUERY_DOC_ACCOUNTS&IsSoap=1";
+    @ConfigItem
+    private String loginUrl = "https:/signin.ccci.org/cas/login";
     
-    protected Object stellentService = null;
+    protected StellentAccountService stellentService = null;
     
     protected void openConnection()
     {
-        stellentService = "dummy value";
         reconProc = new ReconcileAccounts(stellentService);
     }
     
@@ -27,7 +29,7 @@ public class StellentAccountReconTask extends ReconciliationTask
     {
         try
         {
-            stellentService = null;  // close
+            stellentService.close();
         }
         catch(Exception e)
         {
