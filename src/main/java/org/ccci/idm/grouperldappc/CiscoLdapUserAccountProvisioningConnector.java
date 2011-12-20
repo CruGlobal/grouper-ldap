@@ -14,6 +14,19 @@ import edu.internet2.middleware.grouper.util.ConfigItem;
 import edu.internet2.middleware.grouper.util.GrouperUtil;
 import edu.internet2.middleware.subject.Subject;
 
+/**
+ * This connector is designed specifically for our Cisco MeetingPlace needs.  It will create
+ * and remove users in the Sun Directory Server based on their membership in a particular group
+ * in Grouper.  (new membership = create account, remove membership = delete account)
+ * 
+ * This class can be used as a model for future systems that create accounts in external systems.
+ * 
+ * Note that it creates accounts with random passwords with the expectation that the Credentials
+ * Storage and Synchronization System will be sending the real password over at a later time.
+ * 
+ * @author Nathan.Kopp
+ *
+ */
 public class CiscoLdapUserAccountProvisioningConnector implements EventProvisioningConnector
 {
     private static final Log LOG = GrouperUtil.getLog(CiscoLdapUserAccountProvisioningConnector.class);

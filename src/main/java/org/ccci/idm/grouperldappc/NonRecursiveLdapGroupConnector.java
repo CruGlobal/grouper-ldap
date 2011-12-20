@@ -14,6 +14,14 @@ import edu.internet2.middleware.grouper.changeLog.provisioning.EventProvisioning
 import edu.internet2.middleware.grouper.util.ConfigItem;
 import edu.internet2.middleware.grouper.util.GrouperUtil;
 
+/**
+ * This connector provides a one-way sync from one stem in grouper to one base DN in LDAP.
+ * It will create and delete groups in LDAP to correspond to groups in the specified stem,
+ * and will manage membership in LDAP to correspond to Grouper membership.
+ * 
+ * @author Nathan.Kopp
+ *
+ */
 public class NonRecursiveLdapGroupConnector implements EventProvisioningConnector
 {
     private static final Log LOG = GrouperUtil.getLog(NonRecursiveLdapGroupConnector.class);

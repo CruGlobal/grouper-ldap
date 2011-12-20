@@ -10,6 +10,14 @@ import edu.internet2.middleware.grouper.changeLog.provisioning.ChangeEvent;
 import edu.internet2.middleware.grouper.changeLog.provisioning.EventProvisioningConnector;
 import edu.internet2.middleware.grouper.util.ConfigItem;
 
+/**
+ * This connector manages password policies in OID based on group membership.  Users who are in a particular
+ * group will have a password policy assigned to them.  Users not in that group will have the default
+ * policy.
+ * 
+ * @author Nathan.Kopp
+ *
+ */
 public class OidPasswordPolicyConnector implements EventProvisioningConnector
 {
 	@ConfigItem
