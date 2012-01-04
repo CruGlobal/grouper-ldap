@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.http.HttpEntity;
 import org.ccci.dom.DomDocument;
 import org.ccci.dom.DomNode;
+import org.ccci.framework.cas.BasicProtectedHttpClient;
 import org.ccci.framework.cas.CasProtectedHttpClient;
 import org.ccci.framework.cas.CasSession;
 import org.ccci.framework.cas.CasSessionImpl;
@@ -19,14 +20,16 @@ public class StellentAccountService
     private String password;
     private String url;
     private String loginUrl;
+    private boolean useCas;
     
-    public StellentAccountService(String username, String password, String url, String loginUrl)
+    public StellentAccountService(String username, String password, String url, String loginUrl, boolean useCas)
     {
         super();
         this.username = username;
         this.password = password;
         this.url = url;
         this.loginUrl = loginUrl;
+        this.useCas = useCas;
     }
 
     public void close()
@@ -38,7 +41,9 @@ public class StellentAccountService
         List<String> accounts = new ArrayList<String>();
         
         CasSession casSession = new CasSessionImpl(username, password, url, loginUrl, "modcasid");
-        WrappableHttpClient client = CasProtectedHttpClient.wrapHttpClient(new WrappableHttpClientInst(), casSession);
+        WrappableHttpClient client = null;
+        if(useCas) client = CasProtectedHttpClient.wrapHttpClient(new WrappableHttpClientInst(), casSession);
+        else client = BasicProtectedHttpClient.wrapHttpClient(new WrappableHttpClientInst(), username, password);
         
         HttpEntity result = client.executeGet(url);
         DomDocument doc = new DomDocument(result.getContent());

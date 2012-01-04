@@ -16,4 +16,6 @@ public interface WrappableHttpClient
     public Cookie getSessionCookie();
     public void setSessionCookie(Cookie sessionCookie);
 
+    public void setBasicAuth(String username, String password);
+
 }

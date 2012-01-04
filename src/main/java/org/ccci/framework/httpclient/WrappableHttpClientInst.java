@@ -1,8 +1,16 @@
 package org.ccci.framework.httpclient;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.auth.params.AuthPNames;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -20,7 +28,8 @@ import org.apache.http.protocol.HttpContext;
  */
 public class WrappableHttpClientInst implements WrappableHttpClient
 {
-    public Cookie sessionCookie;
+    private Cookie sessionCookie;
+    private UsernamePasswordCredentials creds;
     
 	/**
 	 * Request content from Stellent for the Designation passed in.
@@ -45,10 +54,22 @@ public class WrappableHttpClientInst implements WrappableHttpClient
 		{
 			get.addHeader("Cookie", sessionCookie.getName()+"="+sessionCookie.getValue());		//add the cookie
 		}
-		else
+		
+		if(creds!=null)
 		{
-		    throw new RuntimeException("Session not yet established");
+		    List<String> authpref = new ArrayList<String>();
+		    authpref.add(AuthPolicy.BASIC);
+		    authpref.add(AuthPolicy.DIGEST);
+		    httpClient.getParams().setParameter(AuthPNames.PROXY_AUTH_PREF, authpref);
+		    
+		    URL parsedUrl = new URL(url);
+		    
+		    httpClient.getCredentialsProvider().setCredentials(
+		        new AuthScope(parsedUrl.getHost(), parsedUrl.getPort()), 
+		        new UsernamePasswordCredentials(creds.getUserName(), creds.getPassword()));
 		}
+		
+		
 		response = httpClient.execute(get,context);
 
 		if(redirectHandler.isRedirectRequested(response, context) &&
@@ -71,5 +92,11 @@ public class WrappableHttpClientInst implements WrappableHttpClient
     public void setSessionCookie(Cookie sessionCookie)
     {
         this.sessionCookie = sessionCookie;
+    }
+
+    @Override
+    public void setBasicAuth(String username, String password)
+    {
+        creds = new UsernamePasswordCredentials(username, password);
     }
 }

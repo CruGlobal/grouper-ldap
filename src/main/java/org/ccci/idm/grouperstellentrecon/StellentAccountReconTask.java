@@ -24,12 +24,14 @@ public class StellentAccountReconTask extends ReconciliationTask
     private String url = "http://ucm-qa.ccci.org/ucmqa/idcplg?IdcService=QUERY_DOC_ACCOUNTS&IsSoap=1";
     @ConfigItem
     private String loginUrl = "https:/signin.ccci.org/cas/login";
+    @ConfigItem
+    private String useCas = "true";
     
     protected StellentAccountService stellentService = null;
     
     protected void openConnection()
     {
-        reconProc = new ReconcileAccounts(new StellentAccountService(username, password, url, loginUrl));
+        reconProc = new ReconcileAccounts(new StellentAccountService(username, password, url, loginUrl, "true".equalsIgnoreCase(useCas)?true:false));
     }
     
     protected void closeConnection()
