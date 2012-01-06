@@ -17,7 +17,7 @@ import edu.internet2.middleware.grouper.util.ConfigItem;
 public class StellentAccountReconTask extends ReconciliationTask
 {
     @ConfigItem
-    private String username = "siebel.account.recon@ccci.org";
+    private String username = "stellent.account.recon@ccci.org";
     @ConfigItem
     private String password = "-------";
     @ConfigItem
@@ -31,6 +31,7 @@ public class StellentAccountReconTask extends ReconciliationTask
     
     protected void openConnection()
     {
+        System.out.println("StellentAccountReconTask opening connection");
         reconProc = new ReconcileAccounts(new StellentAccountService(username, password, url, loginUrl, "true".equalsIgnoreCase(useCas)?true:false));
     }
     
@@ -38,6 +39,7 @@ public class StellentAccountReconTask extends ReconciliationTask
     {
         try
         {
+            System.out.println("StellentAccountReconTask closing connection");
             stellentService.close();
         }
         catch(Exception e)

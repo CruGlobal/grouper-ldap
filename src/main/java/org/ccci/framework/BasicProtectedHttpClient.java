@@ -1,4 +1,4 @@
-package org.ccci.framework.cas;
+package org.ccci.framework;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

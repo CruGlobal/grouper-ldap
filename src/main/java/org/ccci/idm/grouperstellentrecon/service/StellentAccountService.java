@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.http.HttpEntity;
 import org.ccci.dom.DomDocument;
 import org.ccci.dom.DomNode;
-import org.ccci.framework.cas.BasicProtectedHttpClient;
+import org.ccci.framework.BasicProtectedHttpClient;
 import org.ccci.framework.cas.CasProtectedHttpClient;
 import org.ccci.framework.cas.CasSession;
 import org.ccci.framework.cas.CasSessionImpl;
@@ -38,6 +38,7 @@ public class StellentAccountService
 
     public List<String> getAccountList() throws Exception
     {
+        System.out.println("ReconcileAccounts getAccountList");
         List<String> accounts = new ArrayList<String>();
         
         CasSession casSession = new CasSessionImpl(username, password, url, loginUrl, "modcasid");
@@ -46,7 +47,29 @@ public class StellentAccountService
         else client = BasicProtectedHttpClient.wrapHttpClient(new WrappableHttpClientInst(), username, password);
         
         HttpEntity result = client.executeGet(url);
-        DomDocument doc = new DomDocument(result.getContent());
+        /*
+        int c;
+        while((c = result.getContent().read()) >= 0)
+        {
+            System.out.print((char)c);
+        }
+        */
+        DomDocument doc = null;
+        try
+        {
+            doc = new DomDocument(result.getContent());
+        }
+        catch(org.xml.sax.SAXParseException e)
+        {
+            System.out.println("parsing error occurred for URL: "+url);
+            HttpEntity result2 = client.executeGet(url);
+            int c;
+            while((c = result2.getContent().read()) >= 0)
+            {
+                System.out.print((char)c);
+            }
+            throw e;
+        }
         
         DomNode node = doc.getFirstNodeByName("SOAP-ENV:Envelope");
         node = node.getFirstNodeByName("SOAP-ENV:Body");

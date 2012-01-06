@@ -57,16 +57,16 @@ public class WrappableHttpClientInst implements WrappableHttpClient
 		
 		if(creds!=null)
 		{
-		    List<String> authpref = new ArrayList<String>();
-		    authpref.add(AuthPolicy.BASIC);
-		    authpref.add(AuthPolicy.DIGEST);
-		    httpClient.getParams().setParameter(AuthPNames.PROXY_AUTH_PREF, authpref);
-		    
+            System.out.println("applying credentials: "+creds.getUserName()+","+creds.getPassword());
 		    URL parsedUrl = new URL(url);
 		    
 		    httpClient.getCredentialsProvider().setCredentials(
 		        new AuthScope(parsedUrl.getHost(), parsedUrl.getPort()), 
 		        new UsernamePasswordCredentials(creds.getUserName(), creds.getPassword()));
+		}
+		else
+		{
+		    System.out.println("not applying credentials");
 		}
 		
 		
@@ -76,7 +76,7 @@ public class WrappableHttpClientInst implements WrappableHttpClient
 		        redirectHandler.getLocationURI(response, context).toString().contains("login"))
 		{
 			get.abort();	//abort get request to release the connection in HttpClient
-			throw new RuntimeException("Session not yet established");
+			throw new RuntimeException("Session not yet established for url "+url);
 		}
 		else
 		{
