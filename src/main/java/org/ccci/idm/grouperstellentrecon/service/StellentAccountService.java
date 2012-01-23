@@ -48,12 +48,13 @@ public class StellentAccountService
         
         HttpEntity result = client.executeGet(url);
         /*
-        int c;
-        while((c = result.getContent().read()) >= 0)
+        int c2;
+        while((c2 = result.getContent().read()) >= 0)
         {
-            System.out.print((char)c);
+            System.out.print((char)c2);
         }
         */
+        
         DomDocument doc = null;
         try
         {
@@ -76,6 +77,10 @@ public class StellentAccountService
         node = node.getFirstNodeByName("idc:service");
         node = node.getFirstNodeByName("idc:document");
         node = node.getFirstNodeByNameAndAttrib("idc:resultset","name","DOCACCOUNT_INFO");
+        
+        if(node==null) throw new RuntimeException("List of Stellent accounts not found in XML message.");
+        if(node.getChildNodes()==null) throw new RuntimeException("List of Stellent accounts not found in XML message.");
+        if(node.getChildNodes().getLength()==0) throw new RuntimeException("List of Stellent accountsis empty in XML message.");
         
         for (int i = 0; i < node.getChildNodes().getLength(); i++)
         {

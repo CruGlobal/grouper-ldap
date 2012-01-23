@@ -81,6 +81,7 @@ public class CasSessionImpl implements CasSession
         if(servHeader == null || stHeader == null) throw new RuntimeException("Unable to get Service Ticket from CAS Server");
 
         String service = defaultUrl; //servHeader[0].getValue();
+        if(stHeader.length==0) throw new RuntimeException("CAS login failed");
         String serviceTicket = stHeader[0].getValue();
         
 //        System.out.println("service: "+service);
