@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.ccci.idm.grouperrecon.ExternalFolder;
 import org.ccci.idm.grouperrecon.ExternalGroup;
+import org.ccci.idm.grouperrecon.ExternalNode;
 import org.ccci.idm.grouperrecon.ReconcileHierarchicalList;
 import org.ccci.idm.grouperstellentrecon.service.StellentAccountService;
 
@@ -20,32 +22,35 @@ public class ReconcileStellentAccounts extends ReconcileHierarchicalList
     }
     
     @Override
-    protected List<ExternalGroup> getExternalGroups() throws Exception
+    protected List<ExternalNode> getExternalGroups() throws Exception
     {
-        List<ExternalGroup> retVal = new ArrayList<ExternalGroup>();
+        List<ExternalNode> retVal = new ArrayList<ExternalNode>();
         List<String> accountList = stellentService.getAccountList();
         Collections.sort(accountList);
         for(String groupName :  accountList)
         {
-            System.out.println("processing: "+groupName);
+            //System.out.println("processing: "+groupName);
             String splits[] = groupName.split("-");
-            List<ExternalGroup> list = retVal;
+            List<ExternalNode> list = retVal;
             for(int i=0; i<splits.length; i++)
             {
                 String name = splits[i];
-                ExternalGroup group = null;
-                for(ExternalGroup g : list)
+                ExternalFolder folder = null;
+                for(ExternalNode f : list)
                 {
-                    if(g.getName().equals(name)) group = g;
+                    if(f.getName().equals(name)) folder = (ExternalFolder)f;
                 }
-                if(group==null)
+                if(folder==null)
                 {
-                    group = new ExternalGroup(name);
-                    list.add(group);
+                    folder = new ExternalFolder(name);
+                    list.add(folder);
+                    list.add(new ExternalGroup(name+"_R"));
+                    list.add(new ExternalGroup(name+"_RWD"));
                 }
-                list = group.getChildren();
+                list = folder.getChildren();
             }
         }
+        retVal.add(new ExternalGroup("UCMAllAccounts"));
         return retVal;
     }
 }

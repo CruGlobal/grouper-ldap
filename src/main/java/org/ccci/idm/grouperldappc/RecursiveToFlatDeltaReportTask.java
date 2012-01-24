@@ -164,6 +164,7 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
     private List<String> gatherLdapGroupMembershipAsLdapDns(List<SearchResult> ldapGroupMatches) throws NamingException
     {
         List<String> ldapUsers = new ArrayList<String>();
+        if(ldapGroupMatches.get(0).getAttributes().get("uniqueMember")==null) return ldapUsers;
         NamingEnumeration<?> enum1 = ldapGroupMatches.get(0).getAttributes().get("uniqueMember").getAll();
         while(enum1.hasMore())
         {

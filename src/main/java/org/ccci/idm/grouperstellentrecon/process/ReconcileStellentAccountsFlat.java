@@ -3,7 +3,7 @@ package org.ccci.idm.grouperstellentrecon.process;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ccci.idm.grouperrecon.ExternalGroup;
+import org.ccci.idm.grouperrecon.ExternalNode;
 import org.ccci.idm.grouperrecon.ReconcileFlatList;
 import org.ccci.idm.grouperstellentrecon.service.StellentAccountService;
 
@@ -22,12 +22,12 @@ public class ReconcileStellentAccountsFlat extends ReconcileFlatList
     }
     
     @Override
-    protected List<ExternalGroup> getExternalGroups() throws Exception
+    protected List<ExternalNode> getExternalGroups() throws Exception
     {
-        List<ExternalGroup> retVal = new ArrayList<ExternalGroup>();
+        List<ExternalNode> retVal = new ArrayList<ExternalNode>();
         for(String groupName : stellentService.getAccountList() )
         {
-            retVal.add(new ExternalGroup(groupName));
+            retVal.add(new ExternalNode(groupName));
         }
         return retVal;
     }
