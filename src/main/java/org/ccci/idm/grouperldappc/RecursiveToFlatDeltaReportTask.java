@@ -87,26 +87,155 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         GrouperFolder root = dao.loadFolder(grouperPrefix);
         dao.loadChildGroupsAndFoldersRecursively(root);
         
-        List<String> matchedGroups = new ArrayList<String>();
+        DeltaReport report = new DeltaReport();
+        
         GrouperFolder parent = root;
-        reportFolder(root, parent, matchedGroups);
-        reportExtraLdapGroups(matchedGroups);
+        reportFolder(root, parent, report);
+        reportExtraLdapGroups(report);
+        
+        String reportStr = displayReport(report);
+        System.out.println(reportStr);
     }
 
-    private void reportExtraLdapGroups(List<String> matchedGroups) throws NamingException
+    private String displayReport(DeltaReport report)
+    {
+        StringBuffer sb = new StringBuffer();
+        if(report.getMissingLdapGroups().size()>0)
+        {
+            sb.append("==================================================================\n");
+            sb.append("Groups missing from LDAP that need to be added\n");
+            sb.append("==================================================================\n");
+            for(String missingGroup : report.getMissingLdapGroups())
+            {
+                sb.append(missingGroup+"\n");
+            }
+            sb.append("\n");
+            sb.append("------------------------------------------------------------------\n");
+            sb.append("LDIF to add missing groups into LDAP\n");
+            sb.append("------------------------------------------------------------------\n");
+            for(String missingGroup : report.getMissingLdapGroups())
+            {
+                sb.append("\n");
+                sb.append("dn: "+groupRdnAttrib+"="+missingGroup+","+groupBaseDn+"\n");
+                sb.append("changetype: add\n");
+                sb.append("objectclass: "+groupLdapClass+"\n");
+                sb.append("objectclass: top\n");
+                // do we need "cn"????
+                //sb.append("cn: PublicAdmin");
+            }
+            sb.append("\n");
+        }
+        if(report.getExtraLdapGroups().size()>0)
+        {
+            sb.append("==================================================================\n");
+            sb.append("Groups found in LDAP that need to be removed\n");
+            sb.append("==================================================================\n");
+            for(String extraGroup : report.getExtraLdapGroups())
+            {
+                sb.append(extraGroup+"\n");
+            }
+            sb.append("\n");
+            sb.append("------------------------------------------------------------------\n");
+            sb.append("LDIF to remove extra groups into LDAP\n");
+            sb.append("------------------------------------------------------------------\n");
+            for(String extraGroup : report.getExtraLdapGroups())
+            {
+                sb.append("\n");
+                sb.append("dn: "+groupRdnAttrib+"="+extraGroup+","+groupBaseDn+"\n");
+                sb.append("changetype: delete\n");
+            }
+            sb.append("\n");
+        }
+        if(report.getMissingLdapMembers().size()>0)
+        {
+            sb.append("==================================================================\n");
+            sb.append("Members missing from LDAP that should be added\n");
+            sb.append("==================================================================\n");
+            for(MembershipDifference missingUser : report.getMissingLdapMembers())
+            {
+                sb.append("missing "+missingUser.getLdapDn()+" in group "+missingUser.getLdapGroup()+"\n");
+            }
+            sb.append("\n");
+            sb.append("------------------------------------------------------------------");
+            sb.append("LDIF to add missing users to LDAP");
+            sb.append("------------------------------------------------------------------");
+            String groupRdn = null;
+            for(MembershipDifference missingUser : report.getMissingLdapMembers())
+            {
+                if(!missingUser.getLdapGroup().equals(groupRdn))
+                {
+                    groupRdn = missingUser.getLdapGroup();
+                    sb.append("\n");
+                    sb.append("dn: "+groupRdnAttrib+"="+groupRdn+","+groupBaseDn+"\n");
+                    sb.append("changetype: modify\n");
+                    sb.append("add: uniqueMember\n");
+                }
+                sb.append("uniqueMember: "+missingUser.getLdapDn()+"\n");
+            }
+            sb.append("\n");
+        }
+        if(report.getExtraLdapMembers().size()>0)
+        {
+            sb.append("==================================================================\n");
+            sb.append("Members found in LDAP that should be deleted from LDAP or added to Grouper\n");
+            sb.append("==================================================================\n");
+            for(MembershipDifference extraUser : report.getExtraLdapMembers())
+            {
+                sb.append("found "+extraUser.getLdapDn()+" in group "+extraUser.getLdapGroup()+"\n");
+            }
+            sb.append("\n");
+            sb.append("------------------------------------------------------------------\n");
+            sb.append("LDIF to remove extra users to LDAP\n");
+            sb.append("------------------------------------------------------------------\n");
+            String groupRdn = null;
+            for(MembershipDifference extraUser : report.getExtraLdapMembers())
+            {
+                if(!extraUser.getLdapGroup().equals(groupRdn))
+                {
+                    groupRdn = extraUser.getLdapGroup();
+                    sb.append("\n");
+                    sb.append("dn: "+groupRdnAttrib+"="+groupRdn+","+groupBaseDn+"\n");
+                    sb.append("changetype: modify\n");
+                    sb.append("delete: uniqueMember\n");
+                }
+                sb.append("uniqueMember: "+extraUser.getLdapDn()+"\n");
+            }
+            sb.append("\n");
+            sb.append("------------------------------------------------------------------\n");
+            sb.append("Grouper import\n");
+            sb.append("------------------------------------------------------------------\n");
+            String groupId = null;
+            for(MembershipDifference extraUser : report.getExtraLdapMembers())
+            {
+                if(!extraUser.getGrouperGroup().equals(groupId))
+                {
+                    groupId = extraUser.getGrouperGroup();
+                    sb.append("\n");
+                    sb.append("Find this group in Grouper: "+groupId+"\n");
+                    sb.append("and import these users:\n");
+                }
+                sb.append(extraUser.getGrouperPersonId()+"\n");
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    private void reportExtraLdapGroups(DeltaReport report) throws NamingException
     {
         List<SearchResult> ldapGroups = ldap.search2(groupBaseDn, "(objectClass="+groupLdapClass+")", new String[]{groupRdnAttrib});
         for(SearchResult ldapGroup : ldapGroups)
         {
             String ldapName = ldapGroup.getAttributes().get(groupRdnAttrib).get().toString();
-            if(!matchedGroups.contains(ldapName))
+            if(!report.getMatchedLdapGroups().contains(ldapName))
             {
-                addReportLine("Group is missing in Grouper: "+ldapName);
+                report.getExtraLdapGroups().add(ldapName);
             }
         }
     }
 
-    private void reportFolder(GrouperFolder root, GrouperFolder parent, List<String> matchedGroups) throws NamingException
+    
+    private void reportFolder(GrouperFolder root, GrouperFolder parent, DeltaReport report) throws NamingException
     {
         
         for(GrouperGroup group : parent.getChildGroups())
@@ -119,35 +248,40 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
             }
             else if(ldapGroupMatches.size()==0)
             {
-                addReportLine("Group is missing in LDAP: "+ldapName);
+                report.getMissingLdapGroups().add(ldapName);
             }
             else
             {
-                matchedGroups.add(ldapName);
+                report.getMatchedLdapGroups().add(ldapName);
                 
                 List<String> ldapUsers = gatherLdapGroupMembershipAsLdapDns(ldapGroupMatches);
                 List<String> grouperUsers = gatherGrouperGroupMembershipAsLdapDns(group);
-                reportMembershipDifferences(ldapName, ldapUsers, grouperUsers);
+                reportMembershipDifferences(ldapName, group, ldapUsers, grouperUsers, report);
             }
         }
         for(GrouperFolder folder : parent.getChildFolders())
         {
-            reportFolder(root, folder, matchedGroups);
+            reportFolder(root, folder, report);
         }
     }
 
-    private void reportMembershipDifferences(String ldapName, List<String> ldapUsers, List<String> grouperUsers)
+    private void reportMembershipDifferences(String ldapName, GrouperGroup group, List<String> ldapUsers, List<String> grouperUsers, DeltaReport report)
     {
         for(String grouperUser : grouperUsers)
         {
             if(!ldapUsers.contains(grouperUser))
-                addReportLine("User membership found in Grouper but not LDAP: "+grouperUser+", "+ldapName);
+                report.getMissingLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), grouperUser, extractIdFromDn(grouperUser)));
         }
         for(String ldapUser : ldapUsers)
         {
             if(!grouperUsers.contains(ldapUser))
-                addReportLine("User membership found in LDAP but not Grouper: "+ldapUser+", "+ldapName);
+                report.getExtraLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), ldapUser, extractIdFromDn(ldapUser)));
         }
+    }
+    
+    private String extractIdFromDn(String dn)
+    {
+        return dn.substring(3, 39);
     }
 
     private List<String> gatherGrouperGroupMembershipAsLdapDns(GrouperGroup group)
@@ -173,11 +307,6 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         return ldapUsers;
     }
     
-    private void addReportLine(String string)
-    {
-        System.out.println(string);
-    }
-
     private String computeGroupLdapName(GrouperGroup group, GrouperFolder baseFolder)
     {
         if("y".equalsIgnoreCase(computeFromDescr) || "true".equalsIgnoreCase(computeFromDescr))
