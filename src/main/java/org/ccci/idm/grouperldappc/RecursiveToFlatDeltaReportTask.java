@@ -110,7 +110,7 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         
         String reportStr = generateReport(report);
         
-        System.out.println(reportStr);
+        //System.out.println(reportStr);
         
         sendReport(reportStr);
     }
@@ -121,7 +121,10 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
 
         String to[] = reportRecipients.split(",");
         for (String address : to)
-            mailMessage.addTo(EmailAddress.valueOf(address), "");
+        {
+            //System.out.println("Sending report to ["+address.trim()+"] from ["+reportSender+"] using ["+smtpHost+"]");
+            mailMessage.addTo(EmailAddress.valueOf(address.trim()), "");
+        }
 
         mailMessage.setFrom(EmailAddress.valueOf(reportSender), systemId);
 
