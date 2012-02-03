@@ -14,6 +14,9 @@ import org.ccci.idm.grouper.obj.GrouperFolder;
 import org.ccci.idm.grouper.obj.GrouperGroup;
 import org.ccci.idm.ldap.Ldap;
 import org.ccci.idm.obj.SsoUser;
+import org.ccci.util.mail.EmailAddress;
+import org.ccci.util.mail.MailMessage;
+import org.ccci.util.mail.MailMessageFactory;
 
 import edu.internet2.middleware.grouper.util.ConfigItem;
 import edu.internet2.middleware.grouper.util.GrouperUtil;
@@ -34,21 +37,33 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
     @ConfigItem
     private String groupRdnAttrib = "cn";
     @ConfigItem
-    private String groupBaseDn = "ou=Accounts,ou=Stellent,ou=Xellerate Users,cn=sso,dc=mygcx,dc=org";
+    //private String groupBaseDn = "ou=Accounts,ou=Stellent,ou=Xellerate Users,cn=sso,dc=mygcx,dc=org";
+    private String groupBaseDn = "ou=Roles,ou=Stellent,ou=Xellerate Users,cn=sso,dc=mygcx,dc=org";
     @ConfigItem
     private String groupLdapClass = "groupOfUniqueNames";
     @ConfigItem
-    private String grouperPrefix = "ccci:itroles:uscore:stellent:accounts";
+    //private String grouperPrefix = "ccci:itroles:uscore:stellent:accounts";
+    private String grouperPrefix = "ccci:itroles:uscore:stellent:roles";
     @ConfigItem
     private String ldapUsername = "cn=B3712AFF-88C6-A4B8-6F50-A2E4C4C6A241,cn=sso,dc=mygcx,dc=org";
     @ConfigItem
     private String ldapPassword = "Grouper1";
     @ConfigItem
-    private String ldapUrl = "ldap://hart-a933.ccci.org:389";
+    private String ldapUrl = "ldap://oidtst.ccci.org:389";
     @ConfigItem
     private String flatteningPathSeparatorCharacter = "-";
     @ConfigItem
     private String computeFromDescr = "true";
+    @ConfigItem
+    private String smtpHost = "smtp1.ccci.org";
+    @ConfigItem
+    private String reportRecipients = "nathan.kopp@ccci.org";
+    @ConfigItem
+    private String reportSender = "itm-test@ccci.org";
+    @ConfigItem
+    private String systemId = "IdM Test";
+    @ConfigItem
+    private String reportName = "Stellent Grouper-LDAP Comparison Report";
     
     private GrouperDao dao;
     private Ldap ldap;
@@ -93,18 +108,41 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         reportFolder(root, parent, report);
         reportExtraLdapGroups(report);
         
-        String reportStr = displayReport(report);
+        String reportStr = generateReport(report);
+        
         System.out.println(reportStr);
+        
+        sendReport(reportStr);
     }
 
-    private String displayReport(DeltaReport report)
+    private void sendReport(String reportStr) throws Exception
+    {
+        MailMessage mailMessage = new MailMessageFactory(smtpHost).createApplicationMessage();
+
+        String to[] = reportRecipients.split(",");
+        for (String address : to)
+            mailMessage.addTo(EmailAddress.valueOf(address), "");
+
+        mailMessage.setFrom(EmailAddress.valueOf(reportSender), systemId);
+
+        mailMessage.setMessage(reportName+" for "+systemId, reportStr, false);
+        
+        mailMessage.sendToAll();
+    }
+
+    private String generateReport(DeltaReport report)
     {
         StringBuffer sb = new StringBuffer();
+        sb.append("\n");
+        sb.append("******************************************************************\n");
+        sb.append(reportName+" for "+systemId+"\n");
+        sb.append("******************************************************************\n");
+        sb.append("\n\n");
         if(report.getMissingLdapGroups().size()>0)
         {
-            sb.append("==================================================================\n");
-            sb.append("Groups missing from LDAP that need to be added\n");
-            sb.append("==================================================================\n");
+            sb.append("******************************************************************\n");
+            sb.append("Groups missing from LDAP that need to be added\n\n");
+            sb.append("******************************************************************\n");
             for(String missingGroup : report.getMissingLdapGroups())
             {
                 sb.append(missingGroup+"\n");
@@ -127,9 +165,9 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         }
         if(report.getExtraLdapGroups().size()>0)
         {
-            sb.append("==================================================================\n");
+            sb.append("******************************************************************\n");
             sb.append("Groups found in LDAP that need to be removed\n");
-            sb.append("==================================================================\n");
+            sb.append("******************************************************************\n");
             for(String extraGroup : report.getExtraLdapGroups())
             {
                 sb.append(extraGroup+"\n");
@@ -148,9 +186,9 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         }
         if(report.getMissingLdapMembers().size()>0)
         {
-            sb.append("==================================================================\n");
+            sb.append("******************************************************************\n");
             sb.append("Members missing from LDAP that should be added\n");
-            sb.append("==================================================================\n");
+            sb.append("******************************************************************\n");
             for(MembershipDifference missingUser : report.getMissingLdapMembers())
             {
                 sb.append("missing "+missingUser.getLdapDn()+" in group "+missingUser.getLdapGroup()+"\n");
@@ -176,18 +214,24 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         }
         if(report.getExtraLdapMembers().size()>0)
         {
-            sb.append("==================================================================\n");
+            sb.append("******************************************************************\n");
             sb.append("Members found in LDAP that should be deleted from LDAP or added to Grouper\n");
-            sb.append("==================================================================\n");
+            sb.append("******************************************************************\n");
+            String groupRdn = null;
             for(MembershipDifference extraUser : report.getExtraLdapMembers())
             {
-                sb.append("found "+extraUser.getLdapDn()+" in group "+extraUser.getLdapGroup()+"\n");
+                if(!extraUser.getLdapGroup().equals(groupRdn))
+                {
+                    groupRdn = extraUser.getLdapGroup();
+                    sb.append("\nin group "+extraUser.getLdapGroup()+"\n");
+                }
+                sb.append("  "+extraUser.getLdapDn()+"\n");
             }
             sb.append("\n");
             sb.append("------------------------------------------------------------------\n");
             sb.append("LDIF to remove extra users to LDAP\n");
             sb.append("------------------------------------------------------------------\n");
-            String groupRdn = null;
+            groupRdn = null;
             for(MembershipDifference extraUser : report.getExtraLdapMembers())
             {
                 if(!extraUser.getLdapGroup().equals(groupRdn))
