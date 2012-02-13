@@ -14,9 +14,6 @@ import org.ccci.idm.grouper.obj.GrouperFolder;
 import org.ccci.idm.grouper.obj.GrouperGroup;
 import org.ccci.idm.ldap.Ldap;
 import org.ccci.idm.obj.SsoUser;
-import org.ccci.util.mail.EmailAddress;
-import org.ccci.util.mail.MailMessage;
-import org.ccci.util.mail.MailMessageFactory;
 
 import edu.internet2.middleware.grouper.util.ConfigItem;
 import edu.internet2.middleware.grouper.util.GrouperUtil;
@@ -26,7 +23,7 @@ import edu.internet2.middleware.grouper.util.GrouperUtil;
  * @author Nathan.Kopp
  *
  */
-public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
+public class RecursiveToFlatDeltaReportTask extends ReportTask
 {
     private static final Log LOG = GrouperUtil.getLog(RecursiveToFlatDeltaReportTask.class);
     
@@ -54,16 +51,6 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
     private String flatteningPathSeparatorCharacter = "-";
     @ConfigItem
     private String computeFromDescr = "true";
-    @ConfigItem
-    private String smtpHost = "smtp1.ccci.org";
-    @ConfigItem
-    private String reportRecipients = "nathan.kopp@ccci.org";
-    @ConfigItem
-    private String reportSender = "itm-test@ccci.org";
-    @ConfigItem
-    private String systemId = "IdM Test";
-    @ConfigItem
-    private String reportName = "Stellent Grouper-LDAP Comparison Report";
     
     private GrouperDao dao;
     private Ldap ldap;
@@ -113,24 +100,6 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         //System.out.println(reportStr);
         
         sendReport(reportStr);
-    }
-
-    private void sendReport(String reportStr) throws Exception
-    {
-        MailMessage mailMessage = new MailMessageFactory(smtpHost).createApplicationMessage();
-
-        String to[] = reportRecipients.split(",");
-        for (String address : to)
-        {
-            //System.out.println("Sending report to ["+address.trim()+"] from ["+reportSender+"] using ["+smtpHost+"]");
-            mailMessage.addTo(EmailAddress.valueOf(address.trim()), "");
-        }
-
-        mailMessage.setFrom(EmailAddress.valueOf(reportSender), systemId);
-
-        mailMessage.setMessage(reportName+" for "+systemId, reportStr, false);
-        
-        mailMessage.sendToAll();
     }
 
     private String generateReport(DeltaReport report)
@@ -317,12 +286,12 @@ public class RecursiveToFlatDeltaReportTask extends DeltaReportTask
         for(String grouperUser : grouperUsers)
         {
             if(!ldapUsers.contains(grouperUser))
-                report.getMissingLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), grouperUser, extractIdFromDn(grouperUser)));
+                report.getMissingLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), grouperUser, extractIdFromDn(grouperUser), null));
         }
         for(String ldapUser : ldapUsers)
         {
             if(!grouperUsers.contains(ldapUser))
-                report.getExtraLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), ldapUser, extractIdFromDn(ldapUser)));
+                report.getExtraLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), ldapUser, extractIdFromDn(ldapUser), null));
         }
     }
     

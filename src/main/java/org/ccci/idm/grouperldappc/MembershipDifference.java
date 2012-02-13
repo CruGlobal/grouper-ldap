@@ -1,19 +1,23 @@
 package org.ccci.idm.grouperldappc;
 
+import org.ccci.idm.obj.SsoUser;
+
 public class MembershipDifference
 {
     public String ldapGroup;
     public String grouperGroup;
     public String ldapDn;
     public String grouperPersonId;
+    public SsoUser ssoUser;
     
-    public MembershipDifference(String ldapGroup, String grouperGroup, String ldapDn, String grouperPersonId)
+    public MembershipDifference(String ldapGroup, String grouperGroup, String ldapDn, String grouperPersonId, SsoUser ssoUser)
     {
         super();
         this.ldapGroup = ldapGroup;
         this.grouperGroup = grouperGroup;
         this.ldapDn = ldapDn;
         this.grouperPersonId = grouperPersonId;
+        this.ssoUser = ssoUser;
     }
     public String getLdapGroup()
     {
@@ -46,5 +50,13 @@ public class MembershipDifference
     public void setGrouperPersonId(String grouperPersonId)
     {
         this.grouperPersonId = grouperPersonId;
+    }
+    public SsoUser getSsoUser()
+    {
+        return ssoUser;
+    }
+    public void setSsoUser(SsoUser ssoUser)
+    {
+        this.ssoUser = ssoUser;
     }
 }
