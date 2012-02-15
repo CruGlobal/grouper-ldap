@@ -12,6 +12,12 @@ public class DeltaReport
     List<MembershipDifference> missingLdapMembers = new ArrayList<MembershipDifference>();
     List<MembershipDifference> extraLdapMembers = new ArrayList<MembershipDifference>();
     
+
+    public boolean isEmpty()
+    {
+        return extraLdapGroups.isEmpty() && missingLdapGroups.isEmpty() && matchedLdapGroups.isEmpty() && missingLdapMembers.isEmpty() && extraLdapMembers.isEmpty();
+    }
+    
     public List<String> getExtraLdapGroups()
     {
         return extraLdapGroups;

@@ -63,23 +63,25 @@ public class AttestationReportTask extends ReportTask
     {
         List<GrouperMembership> memberships = dao.getMemberships(groupId);
         
-        String reportStr = "Attestation Report\n";
-        reportStr += "Expected attestor: "+attestationUser+"\n\n";
+        String reportStr = "";
         int totalCount = 0;
         int exceptionCount = 0;
         for(GrouperMembership m : memberships)
         {
             if(!m.getAttester().equalsIgnoreCase(attestationUser))
             {
-                reportStr += m.getMember()+" membership attested by "+m.getAttester()+" \n\n";
+                reportStr += "  "+m.getMember()+" membership attested by "+m.getAttester()+" \n";
                 exceptionCount++;
             }
             totalCount++;
         }
-        reportStr+="\n\nExceptions: "+exceptionCount+"\nTotal:"+totalCount;
+        String reportHeader = "Attestation Report\n";
+        reportHeader += "Expected attestor: "+attestationUser;
+        reportHeader += "\n\nExceptions: "+exceptionCount+"\nTotal:"+totalCount+"\n\n";
         
+        reportStr = reportHeader + reportStr;
         
-        sendReport(reportStr);
+        if(exceptionCount>0) sendReport(reportStr);
     }
 
 

@@ -95,11 +95,11 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
         reportFolder(root, parent, report);
         reportExtraLdapGroups(report);
         
-        String reportStr = generateReport(report);
-        
-        //System.out.println(reportStr);
-        
-        sendReport(reportStr);
+        if(!report.isEmpty())
+        {
+            String reportStr = generateReport(report);
+            sendReport(reportStr);
+        }
     }
 
     private String generateReport(DeltaReport report)
