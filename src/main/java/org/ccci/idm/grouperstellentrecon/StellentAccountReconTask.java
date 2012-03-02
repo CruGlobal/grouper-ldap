@@ -29,17 +29,16 @@ public class StellentAccountReconTask extends ReconciliationTask
     @ConfigItem
     private String grouperUser = "stellent.account.recon@ccci.org";;
     @ConfigItem
-    private String adminUser = "stellent.account.rules@ccci.org";
+    private String adminUsers = "ccci:itroles:uscore:stellent:stellent_admins";
     @ConfigItem
     private String groupPrefix = "ccci:itroles:uscore:stellent:accounts";
-
     
     protected StellentAccountService stellentService = null;
     
     protected void openConnection()
     {
         System.out.println("StellentAccountReconTask opening connection");
-        reconProc = new ReconcileStellentAccounts(new StellentAccountService(username, password, url, loginUrl, "true".equalsIgnoreCase(useCas)?true:false), grouperUser, adminUser, groupPrefix);
+        reconProc = new ReconcileStellentAccounts(new StellentAccountService(username, password, url, loginUrl, "true".equalsIgnoreCase(useCas)?true:false), grouperUser, adminUsers, groupPrefix);
     }
     
     protected void closeConnection()

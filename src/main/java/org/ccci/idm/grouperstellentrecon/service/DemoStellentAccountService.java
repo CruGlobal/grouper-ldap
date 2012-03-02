@@ -2,7 +2,7 @@ package org.ccci.idm.grouperstellentrecon.service;
 
 import java.util.List;
 
-public class DemoStellentAccountReconService
+public class DemoStellentAccountService
 {
 
     /**

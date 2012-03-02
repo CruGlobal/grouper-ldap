@@ -15,9 +15,9 @@ public class ReconcileStellentAccounts extends ReconcileHierarchicalList
 {
     private StellentAccountService stellentService;
     
-    public ReconcileStellentAccounts(StellentAccountService stellentService, String grouperUser, String adminUser, String groupPrefix)
+    public ReconcileStellentAccounts(StellentAccountService stellentService, String grouperUser, String adminUsers, String groupPrefix)
     {
-        super(grouperUser, adminUser, groupPrefix);
+        super(grouperUser, adminUsers, groupPrefix);
         this.stellentService = stellentService;
     }
     
