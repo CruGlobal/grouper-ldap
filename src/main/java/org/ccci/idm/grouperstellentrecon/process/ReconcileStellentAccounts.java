@@ -29,6 +29,8 @@ public class ReconcileStellentAccounts extends ReconcileHierarchicalList
         Collections.sort(accountList);
         for(String groupName :  accountList)
         {
+            if(groupName.toLowerCase().startsWith("private-dss-staff")) continue;
+            if(groupName.toLowerCase().startsWith("shared-dss-staff")) continue;
             //System.out.println("processing: "+groupName);
             String splits[] = groupName.split("-");
             List<ExternalNode> list = retVal;
