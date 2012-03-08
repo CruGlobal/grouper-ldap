@@ -1,8 +1,5 @@
 package org.ccci.framework.cas;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URLEncoder;
 
@@ -71,6 +68,8 @@ public class CasSessionImpl implements CasSession
         HttpGet getServiceTicket = new HttpGet(buildDefaultRequestToCasServer());   //construct a generic get to retrieve ST
         setFollowRedirect(getServiceTicket, false);
         
+//        System.out.println(getServiceTicket);
+        
 //        System.out.println("start getServiceTicket");
         HttpResponse responseFromCasServer = httpClient.execute(getServiceTicket);
 //        System.out.println("end getServiceTicket");
@@ -90,22 +89,23 @@ public class CasSessionImpl implements CasSession
         getServiceTicket.abort();   //abort get request to release the connection in HttpClient
 
         //construct a GET with the generic service and ST obtained from the CAS server to obtain a cookie
-        //System.out.println(buildDefaultRequestWithServiceTicket(service,serviceTicket));
-        HttpGet getCookie = new HttpGet(buildDefaultRequestWithServiceTicket(service,serviceTicket));
+        URI getCookieUrl = buildDefaultRequestWithServiceTicket(service,serviceTicket);
+//        System.out.println(getCookieUrl);
+        HttpGet getCookie = new HttpGet(getCookieUrl);
         setFollowRedirect(getCookie, false);
 
-//        System.out.println("start getCookie");
         HttpResponse responseWithCookie = httpClient.execute(getCookie);
-//        System.out.println("end getCookie");
         
 //        InputStream is = responseWithCookie.getEntity().getContent();
 //        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+//        System.out.println("start response");
 //        String line = reader.readLine();
 //        while(line!=null)
 //        {
 //            System.out.println(line);
 //            line = reader.readLine();
 //        }
+//        System.out.println("end response");
 
         sessionCookie = extractCookieFromResponse(responseWithCookie);   //go get the cookie and store it
         getCookie.abort(); //abort get request to release the connection in HttpClient
