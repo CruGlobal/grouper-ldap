@@ -29,6 +29,12 @@
 	  <version>1-SNAPSHOT</version>
     </dependency>
     
+	<dependency>
+      <groupId>org.ccci</groupId>
+      <artifactId>password-services-client</artifactId>
+	  <version>1-SNAPSHOT</version>
+    </dependency>
+    
 <dependency>
     <groupId>org.apache.httpcomponents</groupId>
     <artifactId>httpclient</artifactId>

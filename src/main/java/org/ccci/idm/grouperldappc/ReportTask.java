@@ -17,7 +17,7 @@ public abstract class ReportTask implements Runnable
     @ConfigItem
     String reportSender = "itm-test@ccci.org";
     @ConfigItem
-    String systemId = "IdM Test";
+    String systemId = "IdM Laptop";
     @ConfigItem
     String reportName = "Grouper-LDAP Comparison Report";
 

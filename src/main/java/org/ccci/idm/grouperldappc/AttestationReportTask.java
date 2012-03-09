@@ -1,17 +1,11 @@
 package org.ccci.idm.grouperldappc;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import javax.naming.NamingException;
-import javax.naming.directory.SearchResult;
 
 import org.apache.commons.logging.Log;
 import org.ccci.idm.grouper.dao.GrouperDao;
 import org.ccci.idm.grouper.dao.GrouperDaoImpl;
-import org.ccci.idm.grouper.obj.GrouperGroup;
 import org.ccci.idm.grouper.obj.GrouperMembership;
-import org.ccci.idm.obj.SsoUser;
 
 import edu.internet2.middleware.grouper.util.ConfigItem;
 import edu.internet2.middleware.grouper.util.GrouperUtil;
@@ -27,7 +21,7 @@ public class AttestationReportTask extends ReportTask
     
     private String groupId = "ccci:itroles:uscore:stellent:roles:StaffOnlyConsumer";
     @ConfigItem
-    private String attestationUser = "staffweb.responsibility.rules@ccci.org";
+    private String attestationUser = "staffweb.rules@ccci.org";
     @ConfigItem
     
     private GrouperDao dao;

@@ -208,6 +208,7 @@ public class FlatExistenceDeltaReportTask extends ReportTask
         for(SsoUser grouperUser : grouperUsersFull)
         {
             String userDn = userRdnAttribName+"="+grouperUser.getSsoGuid()+","+userBaseDn;
+            userDn = userDn.toLowerCase();
             if(!ldapUsers.contains(userDn))
                 report.getMissingLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), userDn, grouperUser.getSsoGuid(), grouperUser));
         }

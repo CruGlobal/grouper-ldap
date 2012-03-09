@@ -1,6 +1,12 @@
 package org.ccci.idm.grouperldappc;
 
+import java.net.URL;
+
+import javax.xml.namespace.QName;
+
 import org.apache.commons.logging.Log;
+import org.ccci.idm.creds.client.CredentialsWebService;
+import org.ccci.idm.creds.client.CredentialsWebServiceService;
 import org.ccci.idm.grouper.dao.GrouperDao;
 import org.ccci.idm.grouper.dao.GrouperDaoImpl;
 import org.ccci.idm.grouper.obj.GrouperGroup;
@@ -51,8 +57,16 @@ public class CiscoLdapUserAccountProvisioningConnector implements EventProvision
 	@ConfigItem
 	private String ldapUrl = "ldap://hart-a909.ccci.org:58389";
 	
+	@ConfigItem
+    private String credsServiceWsdl = "https://cas.ccci.org/password-services/creds?wsdl";
+	@ConfigItem
+    private String credServiceClientId = "abc";
+	@ConfigItem
+    private String credServiceClientKey = "def";
+	
 
     private GrouperDao dao;
+    private CredentialsWebService service;
 
 	public CiscoLdapUserAccountProvisioningConnector()
 	{
@@ -64,6 +78,8 @@ public class CiscoLdapUserAccountProvisioningConnector implements EventProvision
 		if (dao == null)
 		{
 			dao = new GrouperDaoImpl(null);
+			CredentialsWebServiceService locator = new CredentialsWebServiceService(new URL(credsServiceWsdl), new QName("http://webservice.password.idm.ccci.org/", "CredentialsWebServiceService"));
+            service = locator.getCredentialsWebServicePort();
 		}
 
 		if (event.getGroupName()!=null && event.getGroupName().equals(groupFullPath))
@@ -100,9 +116,19 @@ public class CiscoLdapUserAccountProvisioningConnector implements EventProvision
 	                LOG.debug("about to create user: "+firstName+","+lastName+","+user.getSsoGuid()+","+user.getUsername()+","+dummyPassword);
 	                
                     String dn = userRdnAttribName+"="+user.getSsoGuid()+","+userBaseDn;
-	                ldap.createEntity(dn, new String[]{userRdnAttribName, usernameAttribName, passwordAttribName,"sn","givenName","mail"}, new String[]{user.getSsoGuid(), user.getUsername(), dummyPassword, lastName, firstName, user.getUsername()}, userLdapClasses.split("\\s*,\\s*"));
+                    try
+                    {
+                        ldap.createEntity(dn, new String[]{userRdnAttribName, usernameAttribName, passwordAttribName,"sn","givenName","mail"}, new String[]{user.getSsoGuid(), user.getUsername(), dummyPassword, lastName, firstName, user.getUsername()}, userLdapClasses.split("\\s*,\\s*"));
+                        LOG.debug("created user: "+firstName+","+lastName+","+user.getSsoGuid()+","+user.getUsername()+","+dummyPassword);
+                    }
+                    catch(javax.naming.NameAlreadyBoundException e)
+                    {
+                        LOG.info("user already exists: "+dn);
+                    }
 	                
-	                LOG.debug("created user: "+firstName+","+lastName+","+user.getSsoGuid()+","+user.getUsername()+","+dummyPassword);
+	                service.syncCredentials(credServiceClientId, credServiceClientKey, user.getSsoGuid(), "cisco_sunds");
+	                
+	                LOG.debug("sent password to cisco_sunds for user: "+user.getSsoGuid()+","+user.getUsername());
     
     				return true;
     			}

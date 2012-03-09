@@ -116,7 +116,14 @@ public class RecursiveToFlatLdapGroupConnector implements EventProvisioningConne
         			}
         			catch(Exception e)
         			{
-        			    LOG.error(e);
+        			    if(e instanceof javax.naming.directory.AttributeInUseException)
+        			    {
+        			        LOG.info(e.getMessage());
+        			    }
+        			    else
+        			    {
+        			        LOG.error(e);
+        			    }
         			}
         			return true;
     		    }
@@ -129,15 +136,22 @@ public class RecursiveToFlatLdapGroupConnector implements EventProvisioningConne
     		        }
     		        catch(javax.naming.NameAlreadyBoundException e)
     		        {
-    		            LOG.error(groupDn+" already exists in "+ldapUrl);
+    		            LOG.error(groupDn+"already exists in"+ldapUrl);
     		        }
     		        catch(Exception e)
     		        {
-    		            LOG.error(e);
+    		            if(e.getMessage().contains("already exists"))
+                        {
+                            LOG.info(e.getMessage());
+                        }
+                        else
+                        {
+                            LOG.error(e);
+                        }
     		        }
     		        return true;
                 }
-    		    else if(event.getEventType().equals(ChangeEvent.ChangeEventType.GROUP_ADD.name()))
+    		    else if(event.getEventType().equals(ChangeEvent.ChangeEventType.GROUP_DELETE.name()))
     		    {
     		        try
                     {
