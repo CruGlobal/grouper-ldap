@@ -21,7 +21,7 @@ public class AttestationReportTask extends ReportTask
     
     private String groupId = "ccci:itroles:uscore:stellent:roles:StaffOnlyConsumer";
     @ConfigItem
-    private String attestationUser = "staffweb.rules@ccci.org";
+    private String attestationUser = "stellent.rules@ccci.org";
     @ConfigItem
     
     private GrouperDao dao;

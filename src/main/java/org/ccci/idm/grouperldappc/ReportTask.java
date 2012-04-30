@@ -15,7 +15,7 @@ public abstract class ReportTask implements Runnable
     @ConfigItem
     String reportRecipients = "nathan.kopp@ccci.org";
     @ConfigItem
-    String reportSender = "itm-test@ccci.org";
+    String reportSender = "itm-laptop@ccci.org";
     @ConfigItem
     String systemId = "IdM Laptop";
     @ConfigItem
