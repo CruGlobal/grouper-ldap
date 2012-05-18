@@ -15,7 +15,7 @@ public class DeltaReport
 
     public boolean isEmpty()
     {
-        return extraLdapGroups.isEmpty() && missingLdapGroups.isEmpty() && matchedLdapGroups.isEmpty() && missingLdapMembers.isEmpty() && extraLdapMembers.isEmpty();
+        return extraLdapGroups.isEmpty() && missingLdapGroups.isEmpty() && missingLdapMembers.isEmpty() && extraLdapMembers.isEmpty();
     }
     
     public List<String> getExtraLdapGroups()

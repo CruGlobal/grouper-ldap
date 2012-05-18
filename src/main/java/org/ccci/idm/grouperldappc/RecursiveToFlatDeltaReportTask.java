@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchResult;
 
 import org.apache.commons.logging.Log;
@@ -51,6 +52,8 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
     private String flatteningPathSeparatorCharacter = "-";
     @ConfigItem
     private String computeFromDescr = "true";
+    @ConfigItem
+    private String memberAttribName = "member";
     
     private GrouperDao dao;
     private Ldap ldap;
@@ -87,7 +90,9 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
     protected void runReport() throws Exception
     {
         GrouperFolder root = dao.loadFolder(grouperPrefix);
+        //System.out.println("loading grouper info...");
         dao.loadChildGroupsAndFoldersRecursively(root);
+        //System.out.println("loaded");
         
         DeltaReport report = new DeltaReport();
         
@@ -178,9 +183,17 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
                     sb.append("\n");
                     sb.append("dn: "+groupRdnAttrib+"="+groupRdn+","+groupBaseDn+"\n");
                     sb.append("changetype: modify\n");
-                    sb.append("add: uniqueMember\n");
+                    sb.append("add: "+memberAttribName+"\n");
                 }
-                sb.append("uniqueMember: "+missingUser.getLdapDn()+"\n");
+                sb.append(memberAttribName+": "+missingUser.getLdapDn()+"\n");
+            }
+            sb.append("\n");
+            sb.append("------------------------------------------------------------------");
+            sb.append("If you want to remove the users from Grouper, remove these:");
+            sb.append("------------------------------------------------------------------");
+            for(MembershipDifference missingUser : report.getMissingLdapMembers())
+            {
+                sb.append(missingUser.getGrouperPersonId()+"\n");
             }
             sb.append("\n");
         }
@@ -212,9 +225,9 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
                     sb.append("\n");
                     sb.append("dn: "+groupRdnAttrib+"="+groupRdn+","+groupBaseDn+"\n");
                     sb.append("changetype: modify\n");
-                    sb.append("delete: uniqueMember\n");
+                    sb.append("delete: "+memberAttribName+"\n");
                 }
-                sb.append("uniqueMember: "+extraUser.getLdapDn()+"\n");
+                sb.append(memberAttribName+": "+extraUser.getLdapDn()+"\n");
             }
             sb.append("\n");
             sb.append("------------------------------------------------------------------\n");
@@ -253,11 +266,12 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
     
     private void reportFolder(GrouperFolder root, GrouperFolder parent, DeltaReport report) throws NamingException
     {
-        
+        //System.out.println("working on folder: "+root.getFullDisplayName());
         for(GrouperGroup group : parent.getChildGroups())
         {
+            //System.out.println("working on group: "+group.getFullDisplayName());
             String ldapName = computeGroupLdapName(group, root);
-            List<SearchResult> ldapGroupMatches = ldap.search2(groupBaseDn, "("+groupRdnAttrib+"="+ldapName+")", new String[]{"uniqueMember"});
+            List<SearchResult> ldapGroupMatches = ldap.search2(groupBaseDn, "("+groupRdnAttrib+"="+ldapName+")", new String[]{memberAttribName});
             if (ldapGroupMatches.size()>1)
             {
                 throw new RuntimeException("matched more than one LDAP group for "+ldapName);
@@ -270,7 +284,9 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
             {
                 report.getMatchedLdapGroups().add(ldapName);
                 
-                List<String> ldapUsers = gatherLdapGroupMembershipAsLdapDns(ldapGroupMatches);
+                //System.out.println("gathering LDAP members");
+                List<String> ldapUsers = gatherLdapGroupMembershipAsLdapDns2(ldapGroupMatches, ldapName);
+                //System.out.println("gathering grouper members");
                 List<String> grouperUsers = gatherGrouperGroupMembershipAsLdapDns(group);
                 reportMembershipDifferences(ldapName, group, ldapUsers, grouperUsers, report);
             }
@@ -285,11 +301,16 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
     {
         for(String grouperUser : grouperUsers)
         {
+            //System.out.println("working on grouper user: "+grouperUser);
             if(!ldapUsers.contains(grouperUser))
-                report.getMissingLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), grouperUser, extractIdFromDn(grouperUser), null));
+            {
+                SsoUser user = dao.loadSsoUser(extractIdFromDn(grouperUser));
+                report.getMissingLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), grouperUser, extractIdFromDn(grouperUser), user));
+            }
         }
         for(String ldapUser : ldapUsers)
         {
+            //System.out.println("working on ldap user: "+ldapUser);
             if(!grouperUsers.contains(ldapUser))
                 report.getExtraLdapMembers().add(new MembershipDifference(ldapName, group.getFullDisplayName(), ldapUser, extractIdFromDn(ldapUser), null));
         }
@@ -314,13 +335,84 @@ public class RecursiveToFlatDeltaReportTask extends ReportTask
     private List<String> gatherLdapGroupMembershipAsLdapDns(List<SearchResult> ldapGroupMatches) throws NamingException
     {
         List<String> ldapUsers = new ArrayList<String>();
-        if(ldapGroupMatches.get(0).getAttributes().get("uniqueMember")==null) return ldapUsers;
-        NamingEnumeration<?> enum1 = ldapGroupMatches.get(0).getAttributes().get("uniqueMember").getAll();
+        if(getMemberAttribute(ldapGroupMatches)==null) return ldapUsers;
+        NamingEnumeration<?> enum1 = getMemberAttribute(ldapGroupMatches).getAll();
         while(enum1.hasMore())
         {
             ldapUsers.add(enum1.next().toString().toLowerCase());
         }
         return ldapUsers;
+    }
+    
+    private List<String> gatherLdapGroupMembershipAsLdapDns2(List<SearchResult> ldapGroupMatches, String ldapName) throws NamingException
+    {
+        List<String> ldapUsers = new ArrayList<String>();
+
+        boolean done = false;
+        
+        while(!done)
+        {
+            Attribute memberAttribute = getMemberAttribute(ldapGroupMatches);
+            
+            if(memberAttribute==null) { done = true; break; }
+            if(memberAttribute.size()==0) { done = true; break; }
+            
+            NamingEnumeration<?> enum1 = memberAttribute.getAll();
+            while(enum1.hasMore())
+            {
+                ldapUsers.add(enum1.next().toString().toLowerCase());
+            }
+            
+            if(isRange(memberAttribute))
+            {
+                int max = getRangeMax(memberAttribute);
+                if(max<0)
+                {
+                    done = true;
+                }
+                else
+                {
+                    String attribWithRange = memberAttribName+";range="+(max+1)+"-*";
+                    ldapGroupMatches = ldap.search2(groupBaseDn, "("+groupRdnAttrib+"="+ldapName+")", new String[]{attribWithRange});
+                }
+            }
+            else
+            {
+                done = true;
+            }
+        }
+        
+        return ldapUsers;
+    }
+
+    private boolean isRange(Attribute attrib) throws NamingException
+    {
+        return attrib.getID().contains("range");
+    }
+    
+    private int getRangeMax(Attribute attrib) throws NamingException
+    {
+        String name = attrib.getID();
+        String range = name.substring(name.indexOf(";range")+";range".length());
+        int idx = range.indexOf('-');
+        String endNum = range.substring(idx+1);
+        if(endNum.equals("*")) return -1;
+        return Integer.parseInt(endNum);
+    }
+
+    private Attribute getMemberAttribute(List<SearchResult> ldapGroupMatches) throws NamingException
+    {
+        Attribute memberAttribute = ldapGroupMatches.get(0).getAttributes().get(memberAttribName);
+        if(memberAttribute==null || memberAttribute.size()==0)
+        {
+            NamingEnumeration<?> attribEnum = ldapGroupMatches.get(0).getAttributes().getAll();
+            while(attribEnum.hasMore())
+            {
+                Attribute attrib = (Attribute)attribEnum.next();
+                if(attrib.getID().toLowerCase().startsWith(memberAttribName.toLowerCase()) && !attrib.getID().equalsIgnoreCase(memberAttribName)) return attrib;
+            }
+        }
+        return memberAttribute;
     }
     
     private String computeGroupLdapName(GrouperGroup group, GrouperFolder baseFolder)
