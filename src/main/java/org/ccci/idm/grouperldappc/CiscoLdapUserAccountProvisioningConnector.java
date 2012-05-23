@@ -109,7 +109,7 @@ public class CiscoLdapUserAccountProvisioningConnector implements EventProvision
     			if (event.getEventType().equals(ChangeEvent.ChangeEventType.MEMBERSHIP_ADD.name()))
     			{
 	                String lastName = grouperSubject.getAttributeValue("sn");
-	                String firstName = grouperSubject.getAttributeValue("givenname");
+	                String firstName = grouperSubject.getAttributeValue("givenName");
 	                //LOG.debug("grouperSubject attributes: "+grouperSubject.getAttributes());
 	                String dummyPassword = ""+(long)(Math.random()*1000000000000L);
 	                
