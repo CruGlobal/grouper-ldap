@@ -20,6 +20,8 @@ public abstract class ReportTask implements Runnable
     String systemId = "IdM Laptop";
     @ConfigItem
     String reportName = "Grouper-LDAP Comparison Report";
+    @ConfigItem
+    String customJobName = "ldapDeltaReport";
 
     static Object lock = new Object();
     @Override
@@ -63,9 +65,27 @@ public abstract class ReportTask implements Runnable
     
         mailMessage.setFrom(EmailAddress.valueOf(reportSender), systemId);
     
-        mailMessage.setMessage(reportName+" for "+systemId, reportStr, false);
+        reportStr.replace("\n", "<br/>");
+        reportStr.replace("&", "&amp;");
+        reportStr.replace("<", "&lt;");
+        reportStr.replace(">", "&gt;");
+        mailMessage.setMessage(reportName+" for "+systemId, reportStr, true);
         
         mailMessage.sendToAll();
     }
+
+
+    public String getCustomJobName()
+    {
+        return customJobName;
+    }
+
+
+    public void setCustomJobName(String customJobName)
+    {
+        this.customJobName = customJobName;
+    }
+    
+    
 
 }

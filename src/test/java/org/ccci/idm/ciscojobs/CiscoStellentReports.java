@@ -1,10 +1,10 @@
-package org.ccci.idm.stellentjobs;
+package org.ccci.idm.ciscojobs;
 
 import org.ccci.idm.grouperldappc.BasicDeltaReportTask;
 
 import edu.internet2.middleware.grouper.util.ConfigUtil;
 
-public class RunStellentReports
+public class CiscoStellentReports
 {
 
     /**
@@ -13,13 +13,8 @@ public class RunStellentReports
     public static void main(String[] args)
     {
         long start = System.currentTimeMillis();
-        String customJobName = "stellentDeltaReport";
+        String customJobName = "ciscoDeltaReport";
         BasicDeltaReportTask task = new BasicDeltaReportTask(customJobName);
-        ConfigUtil.readGrouperLoaderConfig(task, "customJob." + customJobName + ".");
-        task.run();
-        
-        customJobName = "stellentDeltaReport2";
-        task = new BasicDeltaReportTask(customJobName);
         ConfigUtil.readGrouperLoaderConfig(task, "customJob." + customJobName + ".");
         task.run();
         long end = System.currentTimeMillis();
