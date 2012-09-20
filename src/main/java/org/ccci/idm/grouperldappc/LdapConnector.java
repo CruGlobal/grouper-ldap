@@ -91,7 +91,7 @@ public class LdapConnector implements ExternalSystemConnector
     {
         ExternGroup ldapGroup = computeExternGroupInfo(group);
         String userDn = userRdnAttribName+"="+user.getSsoGuid()+","+userBaseDn;
-        LOG.debug("adding user to group: "+userDn+" "+ldapGroup.getFullPath());
+        LOG.debug("removing user from group: "+userDn+" "+ldapGroup.getFullPath());
         ldap.removeUserFromGroup(ldapGroup.getFullPath(), userDn);
     }
     
@@ -108,7 +108,7 @@ public class LdapConnector implements ExternalSystemConnector
             String[] attribNames = new String[] { groupRdnAttrib };
             String[] attribValues = new String[] { ldapGroup.getShortName() };
             
-            ldap.createEntity(ldapGroup.getParentPath(), attribNames, attribValues, groupClasses);
+            ldap.createEntity(ldapGroup.getFullPath(), attribNames, attribValues, groupClasses);
             return true;
         }
         catch(javax.naming.NameAlreadyBoundException e)
@@ -134,7 +134,7 @@ public class LdapConnector implements ExternalSystemConnector
     public boolean removeGroup(GroupForSync groupForSync)
     {
         ExternGroup ldapGroup = computeExternGroupInfo(groupForSync);
-        LOG.debug("adding group: "+ldapGroup.getFullPath());
+        LOG.debug("removing group: "+ldapGroup.getFullPath());
         
         try
         {

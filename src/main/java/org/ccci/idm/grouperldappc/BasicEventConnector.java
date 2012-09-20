@@ -45,7 +45,7 @@ public class BasicEventConnector implements EventProvisioningConnector
 	public BasicEventConnector()
 	{
 		super();
-		LOG.debug("Constructed NonRecursiveLdapGroupConnector");
+		LOG.debug("Constructed");
 	}
 
 	public boolean dispatchEvent(ChangeEvent event) throws Exception
@@ -71,6 +71,10 @@ public class BasicEventConnector implements EventProvisioningConnector
             try
             {
                 GrouperGroup group = dao.loadGroup(groupName);
+				if (group == null)
+					if (event.getEventType().equals(ChangeEvent.ChangeEventType.GROUP_DELETE.name()))
+						group = new GrouperGroup(groupName);
+
                 if(group==null)
                 {
                     LOG.info("could not load group: "+groupName);
