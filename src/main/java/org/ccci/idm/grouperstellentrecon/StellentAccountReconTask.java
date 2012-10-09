@@ -33,6 +33,8 @@ public class StellentAccountReconTask extends ReconciliationTask
     @ConfigItem
     private String groupPrefix = "ccci:itroles:uscore:stellent:accounts";
     
+    private String taskName;
+    
     protected StellentAccountService stellentService = null;
     
     protected void openConnection()
@@ -55,6 +57,15 @@ public class StellentAccountReconTask extends ReconciliationTask
         stellentService = null;
         reconProc = null;
     }
+    
+    public StellentAccountReconTask()
+    {
+	}
+
+    public StellentAccountReconTask(String taskName)
+    {
+		this.taskName = taskName;
+	}
 
     public String getUsername()
     {
@@ -106,5 +117,10 @@ public class StellentAccountReconTask extends ReconciliationTask
         this.useCas = useCas;
     }
 
+    public String getTaskName()
+    {
+		return taskName;
+	}
 
+	
 }
